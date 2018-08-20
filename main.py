@@ -2,10 +2,14 @@ from pointNetGAN import point2color as GAN
 from utils import *
 import time, os
 import numpy as np
+import configparser
+import shutil
 
-NUM_PTS = 4096
-#BATCH_SIZE = 200
-EPOCH = 200
+config = configparser.ConfigParser()
+config.read("base_config.ini")
+
+
+NUM_PTS = config["hyperparameters"].getint("num_pts")
 CAT_DIR = "./Data/category_h5py"
 train_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
 # train_dir = "./train_results/2018_07_10_16_27"
@@ -13,6 +17,7 @@ train_dir = os.path.join("./train_results", train_time)
 if not os.path.exists(train_dir):
     os.mkdir(train_dir)
 
+shutil.copyfile("base_config.ini", os.path.join(train_dir, "config.ini"))
 # K = 3
 # hex_color = np_color_to_hex_str(color[K])
 # display_point(data[K], hex_color)
@@ -37,7 +42,7 @@ def main():
             test_data, test_ndata, test_color = load_single_cat_h5(cat, NUM_PTS,"test","data", "ndata", "color")
             printout(flog, "Loading test data! {}".format(cat))
 
-            # data, ndata, color = data[:100], ndata[:100], color[:100]
+            data, ndata, color = data[:100], ndata[:100], color[:100]
             if test_ndata.shape[0]  > 8:
                 BATCH_SIZE = 8
             elif test_ndata.shape[0] > 4:
@@ -45,7 +50,11 @@ def main():
             else:
                 BATCH_SIZE = 2
             with tf.Session() as sess:
-                ptGAN = GAN(sess, flog, num_pts=NUM_PTS, batch_size=BATCH_SIZE, epoch=EPOCH)
+                ptGAN = GAN(sess, flog, num_pts=NUM_PTS,
+                            batch_size=config["hyperparameters"].getint("batch_size"),
+                            epoch=config["hyperparameters"].getint("epoch"),
+                            lr_d=config["hyperparameters"].getfloat("lr_d"),
+                            lr_g=config["hyperparameters"].getfloat("lr_g"))
                 ptGAN.train(train_cat_dir, data, ndata, color, test_data, test_ndata, test_color)
             tf.reset_default_graph()
 

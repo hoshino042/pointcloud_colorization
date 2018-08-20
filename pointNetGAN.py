@@ -8,7 +8,7 @@ from utils import *
 import time
 from ops import *
 class point2color():
-    def __init__(self,sess, flog, batch_size = 32, num_pts = 2048, L1_lambda = 20, epoch =100):
+    def __init__(self,sess, flog, batch_size = 32, num_pts = 2048, L1_lambda = 20, epoch =100, lr_d=0.001, lr_g=0.0001):
         self.isSingleClass = True
         self.batch_size = batch_size
         self.num_pts = num_pts
@@ -36,6 +36,8 @@ class point2color():
 
         self.d_bn_cls_1 = batch_norm(name = "d_bn_cls_1")
         self.d_bn_cls_2 = batch_norm(name = "d_bn_cls_2")
+        self.lr_d = lr_d
+        self.lr_g = lr_g
 
         self.build_model()
         pass
@@ -89,8 +91,13 @@ class point2color():
             # out5 = tf_util.conv2d(out4, 2048, [1, 1], padding='VALID', stride=[1, 1],
             #                       bn=True, is_training=is_training, scope='g_conv5',
             #                       bn_decay=bn_decay)  # batch_size x N x 1 x 2048
-            out_max = max_pool2d(out5, [self.num_pts, 1], padding='VALID',
-                                         scope='g_maxpool')  # batch_size x 1 x 1 x 1024 represent global information
+            out_max = tf.nn.max_pool(out5,
+                           ksize=[1, self.num_pts, 1, 1],
+                           strides=[1, 2, 2, 1],
+                           padding="VALID",
+                           name="g_maxpool")
+            # out_max = max_pool2d(out5, kernel_size=[self.num_pts, 1],
+            #                              scope='')  # batch_size x 1 x 1 x 1024 represent global information
 
             # segmentation network
             expand = tf.tile(out_max, [1, self.num_pts, 1, 1])  # batch_size x N x 1 x 1024
@@ -165,8 +172,13 @@ class point2color():
             # out5 = tf_util.conv2d(out4, 2048, [1, 1], padding='VALID', stride=[1, 1],
             #                       bn=True, is_training=is_training, scope='d_conv5',
             #                       bn_decay=bn_decay)  # batch_size x N x 1 x 2048
-            out_max = max_pool2d(net, [self.num_pts, 1], padding='VALID',
-                                         scope='d_maxpool')  # batch_size x 1 x 1 x 2048 represent global information
+            out_max = tf.nn.max_pool(net,
+                                     ksize=[1, self.num_pts, 1, 1],
+                                     strides=[1, 2, 2, 1],
+                                     padding="VALID",
+                                     name="d_maxpool")
+            # out_max = max_pool2d(net, [self.num_pts, 1], padding='VALID',
+            #                              scope='d_maxpool')  # batch_size x 1 x 1 x 2048 represent global information
             # classification network
             with tf.variable_scope("cls") as scope_cls:
                 net = tf.reshape(out_max, [self.batch_size, -1])
@@ -215,7 +227,7 @@ class point2color():
         self.d_real = tf.reduce_mean(self.D_real)
         self.d_fake = tf.reduce_mean(self.D_fake)
 
-        # define d loss and g loss
+        # define d loss and g loss NS-GAN loss
         self.d_loss_real = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_real_logit, labels=tf.ones_like(self.D_real_logit)))
         self.d_loss_fake = tf.reduce_mean(
@@ -261,8 +273,8 @@ class point2color():
         # for item in tf.GraphKeys.UPDATE_OPS:
         #     print(item)
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-            self.d_optim = tf.train.AdamOptimizer(learning_rate=0.0001, name="d_optim").minimize(self.d_loss, var_list=self.d_vars)
-            self.g_optim = tf.train.AdamOptimizer(learning_rate=0.001, name="g_optim").minimize(self.g_loss, var_list=self.g_vars)
+            self.d_optim = tf.train.AdamOptimizer(learning_rate=self.lr_d, name="d_optim").minimize(self.d_loss, var_list=self.d_vars)
+            self.g_optim = tf.train.AdamOptimizer(learning_rate=self.lr_g, name="g_optim").minimize(self.g_loss, var_list=self.g_vars)
 
         # for item in self.d_vars:
         #     print(item)
