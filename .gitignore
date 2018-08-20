@@ -2,6 +2,7 @@
 /train_results/*
 /Data/category_h5py/*
 /Utils/*
+/.idea/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

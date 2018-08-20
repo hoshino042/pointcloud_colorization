@@ -5,7 +5,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # the directory directly 
 sys.path.append(os.path.dirname(BASE_DIR))
 sys.path.append(os.path.join(BASE_DIR, 'Utils'))
 from utils import *
-import tf_util
 import time
 from ops import *
 class point2color():
@@ -41,7 +40,7 @@ class point2color():
         self.build_model()
         pass
 
-    def __generator(self, point_cloud, bn_is_train, keep_prob):
+    def generator(self, point_cloud, bn_is_train, keep_prob):
         pass
         """
         
@@ -90,7 +89,7 @@ class point2color():
             # out5 = tf_util.conv2d(out4, 2048, [1, 1], padding='VALID', stride=[1, 1],
             #                       bn=True, is_training=is_training, scope='g_conv5',
             #                       bn_decay=bn_decay)  # batch_size x N x 1 x 2048
-            out_max = tf_util.max_pool2d(out5, [self.num_pts, 1], padding='VALID',
+            out_max = max_pool2d(out5, [self.num_pts, 1], padding='VALID',
                                          scope='g_maxpool')  # batch_size x 1 x 1 x 1024 represent global information
 
             # segmentation network
@@ -127,7 +126,7 @@ class point2color():
             #                        bn=False, scope='seg/g_conv4', weight_decay=weight_decay)  # batch_size x N x 1 x 3
             return color  # (batch_size, N, 3)
 
-    def __discriminator(self, point_cloud_color, reuse, bn_is_train):
+    def discriminator(self, point_cloud_color, reuse, bn_is_train):
         pass
         """ ConvNet baseline, input is BxNx6 point cloud """
         with tf.variable_scope("discriminator") as scope:
@@ -166,7 +165,7 @@ class point2color():
             # out5 = tf_util.conv2d(out4, 2048, [1, 1], padding='VALID', stride=[1, 1],
             #                       bn=True, is_training=is_training, scope='d_conv5',
             #                       bn_decay=bn_decay)  # batch_size x N x 1 x 2048
-            out_max = tf_util.max_pool2d(net, [self.num_pts, 1], padding='VALID',
+            out_max = max_pool2d(net, [self.num_pts, 1], padding='VALID',
                                          scope='d_maxpool')  # batch_size x 1 x 1 x 2048 represent global information
             # classification network
             with tf.variable_scope("cls") as scope_cls:
@@ -200,7 +199,7 @@ class point2color():
         self.real_pts_ts = self.real_pts_color_ph[:, :, :3]
         self.real_color_ts = self.real_pts_color_ph[:, :, 3:]  # tensor of real point cloud color
 
-        self.fake_color_ts = self.__generator(self.real_pts_ts, self.bn_is_train, self.keep_prob)  # tensor of fake point cloud color TODO
+        self.fake_color_ts = self.generator(self.real_pts_ts, self.bn_is_train, self.keep_prob)  # tensor of fake point cloud color TODO
 
         self.d_real_color_hist = tf.summary.histogram("real_color", self.real_color_ts)
         self.d_fake_color_hist = tf.summary.histogram("fake_color", self.fake_color_ts)
@@ -210,8 +209,8 @@ class point2color():
                                               self.fake_color_ts], axis=-1)
 
         # feedforward pass for discriminator
-        self.D_real_logit, self.D_real = self.__discriminator(self.real_pts_color_ts, reuse=False, bn_is_train=self.bn_is_train)
-        self.D_fake_logit, self.D_fake = self.__discriminator(self.fake_pts_color_ts, reuse=True, bn_is_train=self.bn_is_train)
+        self.D_real_logit, self.D_real = self.discriminator(self.real_pts_color_ts, reuse=False, bn_is_train=self.bn_is_train)
+        self.D_fake_logit, self.D_fake = self.discriminator(self.fake_pts_color_ts, reuse=True, bn_is_train=self.bn_is_train)
 
         self.d_real = tf.reduce_mean(self.D_real)
         self.d_fake = tf.reduce_mean(self.D_fake)
@@ -391,7 +390,6 @@ class point2color():
         pass
 
     def sampler(self, model_path, data, ndata, color):
-
         pass
 
 

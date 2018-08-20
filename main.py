@@ -37,7 +37,7 @@ def main():
             test_data, test_ndata, test_color = load_single_cat_h5(cat, NUM_PTS,"test","data", "ndata", "color")
             printout(flog, "Loading test data! {}".format(cat))
 
-            data, ndata, color = data[:100], ndata[:100], color[:100]
+            # data, ndata, color = data[:100], ndata[:100], color[:100]
             if test_ndata.shape[0]  > 8:
                 BATCH_SIZE = 8
             elif test_ndata.shape[0] > 4:

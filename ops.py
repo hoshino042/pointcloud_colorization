@@ -60,3 +60,29 @@ class batch_norm(object):
                       scale=True,
                       is_training=phase,
                       scope=self.name)
+
+
+def max_pool2d(inputs,
+               kernel_size,
+               scope,
+               stride=[2, 2],
+               padding='VALID'):
+    """ 2D max pooling.
+  
+    Args:
+      inputs: 4-D tensor BxHxWxC
+      kernel_size: a list of 2 ints
+      stride: a list of 2 ints
+  
+    Returns:
+      Variable tensor
+    """
+    with tf.variable_scope(scope) as sc:
+        kernel_h, kernel_w = kernel_size
+        stride_h, stride_w = stride
+        outputs = tf.nn.max_pool(inputs,
+                                 ksize=[1, kernel_h, kernel_w, 1],
+                                 strides=[1, stride_h, stride_w, 1],
+                                 padding=padding,
+                                 name=sc.name)
+        return outputs
