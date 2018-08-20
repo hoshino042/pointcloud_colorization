@@ -1,0 +1,5 @@
+/test_results/*
+/train_results/*
+/Data/category_h5py/*
+/Utils/*
+*.py[co]
