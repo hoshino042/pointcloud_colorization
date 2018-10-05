@@ -101,8 +101,8 @@ class point2color():
                                             self.keep_prob)  # tensor of fake point cloud color TODO
 
 
-        # define d loss and g loss NS-GAN loss
-        self.g_loss = tf.reduce_mean(tf.abs(self.real_color_ts - self.fake_color_ts))
+        # define g loss as L2
+        self.g_loss = tf.reduce_mean((self.real_color_ts - self.fake_color_ts) ** 2)
 
         # Add losses to summary
         self.g_loss_sum = tf.summary.scalar("g_loss", self.g_loss)
@@ -161,15 +161,17 @@ class point2color():
         self.num_batches = ndata.shape[0] // self.batch_size
         start_time = time.time()
 
-        test_masks = np.random.choice(test_data.shape[0], self.batch_size, replace=False)
-        batch_test_ndata = test_ndata_ncolor[test_masks]
-        batch_test_color = test_color[test_masks]
-        batch_test_data = test_data[test_masks]
+
 
         train_masks = np.random.choice(data.shape[0], self.batch_size, replace=False)
         batch_train_ndata_ncolor = ndata_ncolor[train_masks]
         batch_train_data = data[train_masks]  # no normalized data
         batch_train_color = color[train_masks]  # true color
+
+        test_masks = np.random.choice(test_data.shape[0], self.batch_size, replace=False)
+        batch_test_ndata = test_ndata_ncolor[test_masks]
+        batch_test_color = test_color[test_masks]
+        batch_test_data = test_data[test_masks]
         for epoch in range(self.epoch):
             # get batch data
             for idx in range(self.num_batches):
@@ -208,6 +210,7 @@ class point2color():
                 printout(self.flog, "Saved! {}".format(fname))
 
             if epoch % 1 == 0:
+
                 self.saver.save(self.sess, model_dir + "/model", epoch)
                 test_fake_color = self.sess.run(self.fake_color_ts, feed_dict={self.real_pts_color_ph: batch_test_ndata,
                                                                                self.bn_is_train: False,

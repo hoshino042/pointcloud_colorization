@@ -1,4 +1,5 @@
-from pointNetGAN import point2color as GAN
+# from pointNetGAN import point2color as GAN
+from model import point2color as GAN
 from utils import *
 import time, os
 import numpy as np
@@ -18,14 +19,7 @@ if not os.path.exists(train_dir):
     os.mkdir(train_dir)
 
 shutil.copyfile("base_config.ini", os.path.join(train_dir, "config.ini"))
-# K = 3
-# hex_color = np_color_to_hex_str(color[K])
-# display_point(data[K], hex_color)
 
-
-# K = 2
-# hex_color = np_color_to_hex_str(test_color[K])
-# display_point(test_data[K], hex_color)
 
 def main():
     for cat in os.listdir(CAT_DIR):
@@ -42,7 +36,8 @@ def main():
             test_data, test_ndata, test_color = load_single_cat_h5(cat, NUM_PTS,"test","data", "ndata", "color")
             printout(flog, "Loading test data! {}".format(cat))
 
-            data, ndata, color = data[:100], ndata[:100], color[:100]
+            use_samples = 500
+            data, ndata, color = data[:use_samples], ndata[:use_samples], color[:use_samples]
             if test_ndata.shape[0]  > 8:
                 BATCH_SIZE = 8
             elif test_ndata.shape[0] > 4:
@@ -53,7 +48,6 @@ def main():
                 ptGAN = GAN(sess, flog, num_pts=NUM_PTS,
                             batch_size=config["hyperparameters"].getint("batch_size"),
                             epoch=config["hyperparameters"].getint("epoch"),
-                            lr_d=config["hyperparameters"].getfloat("lr_d"),
                             lr_g=config["hyperparameters"].getfloat("lr_g"))
                 ptGAN.train(train_cat_dir, data, ndata, color, test_data, test_ndata, test_color)
             tf.reset_default_graph()
