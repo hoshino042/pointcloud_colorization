@@ -131,7 +131,7 @@ class point2color():
         :param color: a numpy array of shape (N, num_pts, 3)
         :return: 
         """
-        ncolor = (color - 127.5) / 127.5
+        ncolor = (color - 127.5) / 127.5  # mapping color into a range between -1 and 1
         test_ncolor = (test_color - 127.5) / 127.5
         print(np.mean(ncolor[0], axis=0))
         ndata_ncolor = np.concatenate((ndata, ncolor), axis=-1)
@@ -162,7 +162,7 @@ class point2color():
         start_time = time.time()
 
 
-
+        # for visilization during the training process , not for training
         train_masks = np.random.choice(data.shape[0], self.batch_size, replace=False)
         batch_train_ndata_ncolor = ndata_ncolor[train_masks]
         batch_train_data = data[train_masks]  # no normalized data
@@ -178,10 +178,31 @@ class point2color():
                 global_step = epoch * self.num_batches + idx + 1
                 masks = range(idx * self.batch_size, (idx + 1) * self.batch_size)
                 batch_ndata_ncolor = ndata_ncolor[masks]
+
+                # add Gaussian noise to training data, sample noise until it is less than 0.1
+                noise_ndata = np.ones((batch_ndata_ncolor.shape[0], self.num_pts, 3))
+                while 1:
+                    temp_noise = 0.03 * np.random.randn(batch_ndata_ncolor.shape[0], self.num_pts, 3)
+                    noise_ndata = np.where(np.abs(noise_ndata) < 0.03 , noise_ndata, temp_noise)
+                    if np.all(np.abs(noise_ndata) < 0.03):
+                        break
+                noise_ncolor = np.ones((batch_ndata_ncolor.shape[0], self.num_pts, 3))
+                while 1:
+                    temp_noise = 0.1 * np.random.randn(batch_ndata_ncolor.shape[0], self.num_pts, 3)
+                    noise_ncolor = np.where(np.abs(noise_ncolor) < 0.1, noise_ncolor, temp_noise)
+                    if np.all(np.abs(noise_ncolor) < 0.1):
+                        break
+                noised_batch_ndata_ncolor = batch_ndata_ncolor + np.concatenate((noise_ndata,noise_ncolor), axis=-1)
+                noised_batch_ndata_ncolor[...,3:] = np.where(noised_batch_ndata_ncolor[...,3:]<1,noised_batch_ndata_ncolor[...,3:], 1.0)
+                noised_batch_ndata_ncolor[..., 3:] = np.where(noised_batch_ndata_ncolor[..., 3:] > -1,
+                                                              noised_batch_ndata_ncolor[..., 3:], -1.0)
+                # display_point(noised_batch_ndata_ncolor[0, :, :3],
+                #               ((batch_ndata_ncolor[0,:,3:] + 1) * 127.5).astype(np.int16),
+                #               ((noised_batch_ndata_ncolor[0,:,3:] + 1) * 127.5).astype(np.int16))
                 batch_data = data[masks]
                 batch_color = color[masks]
                 g_sum_save, g_loss_print, _ = self.sess.run([self.g_sum, self.g_loss, self.g_optim], feed_dict={
-                    self.real_pts_color_ph: batch_ndata_ncolor,
+                    self.real_pts_color_ph: noised_batch_ndata_ncolor,
                     self.bn_is_train: True,
                     self.keep_prob: 0.8})
                 self.train_writer.add_summary(g_sum_save, global_step)
@@ -191,12 +212,6 @@ class point2color():
                          "Training! epoch %3d/%3d batch%3d/%3d time: %2dh%2dm%2ds  g_loss: %.4f" % (
                              epoch + 1, self.epoch, idx + 1, self.num_batches, period // 3600, period // 60,
                              period % 60, g_loss_print))
-                # fake_color = self.sess.run(self.fake_color_ts, feed_dict = {self.real_pts_color_ph: batch_ndata_ncolor,
-                #                                               self.bn_is_train: True})
-                # fake_color256 = ((fake_color + 1) * 128).astype(np.int16) # (batch_size, N, 3)
-                # hex_fake_color = np_color_to_hex_str(fake_color256[0])
-                # hex_true_color = np_color_to_hex_str(batch_color[0])
-                # display_point(batch_data[0], hex_true_color, hex_fake_color)
             # save model each 10 epoch
             train_fake_color = self.sess.run(self.fake_color_ts,
                                              feed_dict={self.real_pts_color_ph: batch_train_ndata_ncolor,

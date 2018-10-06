@@ -40,7 +40,7 @@ def hausdorff_distance(ptsA, ptsB):
     return max([directed_hausdorff_distance(ptsA, ptsB), directed_hausdorff_distance(ptsB, ptsA)])
 
 
-def display_point(pts, color, color_label=None, fname=None):
+def display_point(pts, color1, color2=None, fname=None):
     """
 
     :param pts:
@@ -49,10 +49,14 @@ def display_point(pts, color, color_label=None, fname=None):
     :param fname: save path and filename of the figue
     :return:
     """
+    if isinstance(color1, np.ndarray):
+        color1 = np_color_to_hex_str(color1)
+    if isinstance(color2, np.ndarray):
+        color2 = np_color_to_hex_str(color2)
     DPI =300
     PIX_h = 1000
     MARKER_SIZE = 5
-    if color_label is None:
+    if color2 is None:
         PIX_w = PIX_h
     else:
         PIX_w = PIX_h * 2
@@ -67,9 +71,9 @@ def display_point(pts, color, color_label=None, fname=None):
     fig.set_size_inches(PIX_w/DPI, PIX_h/DPI)
     plt.subplots_adjust(top=1.2, bottom=-0.2, right=1.5, left=-0.5, hspace=0, wspace=-0.7)
     plt.margins(0, 0)
-    if color_label is None:
+    if color2 is None:
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(X, Y, Z, c=color, edgecolors="none", s=MARKER_SIZE, depthshade=True)
+        ax.scatter(X, Y, Z, c=color1, edgecolors="none", s=MARKER_SIZE, depthshade=True)
         ax.set_xlim(mid_x - max_range, mid_x + max_range)
         ax.set_ylim(mid_y - max_range, mid_y + max_range)
         ax.set_zlim(mid_z - max_range, mid_z + max_range)
@@ -84,8 +88,8 @@ def display_point(pts, color, color_label=None, fname=None):
     else:
         ax = fig.add_subplot(121, projection='3d')
         bx = fig.add_subplot(122, projection='3d')
-        ax.scatter(X, Y, Z, c=color, edgecolors="none", s=MARKER_SIZE, depthshade=True)
-        bx.scatter(X, Y, Z, c=color_label, edgecolors="none", s=MARKER_SIZE, depthshade=True)
+        ax.scatter(X, Y, Z, c=color1, edgecolors="none", s=MARKER_SIZE, depthshade=True)
+        bx.scatter(X, Y, Z, c=color2, edgecolors="none", s=MARKER_SIZE, depthshade=True)
         ax.set_xlim(mid_x - max_range, mid_x + max_range)
         ax.set_ylim(mid_y - max_range, mid_y + max_range)
         ax.set_zlim(mid_z - max_range, mid_z + max_range)
