@@ -1,5 +1,6 @@
 import tensorflow as tf
 import os
+import time
 from utils import *
 
 cat = "03001627_chair"
@@ -13,7 +14,8 @@ model_id = 171
 graph_file = os.path.join(modelPath, "model-" + str(model_id) + ".meta")
 variable_file = os.path.join(modelPath, "model-" + str(model_id))
 
-test_dir = "./test_results/2018_07_19_16_15"
+test_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
+test_dir = os.path.join("./test_results", test_time)
 if not os.path.exists(test_dir):
     os.mkdir(test_dir)
 
@@ -46,16 +48,18 @@ with tf.Session() as sess:
     batch_test_color = test_color[masks]
     batch_test_ndata_color = np.concatenate([batch_test_ndata, batch_test_color], axis=-1)
     all_ex = []
-    for i in range(1, 10):
-        fake_colored_pts = sess.run(fake_pts, feed_dict={input_pt: batch_test_ndata_color, bn_is_train: False, keep_prob:i / 10.0})
-        fake_colored_pts = np.squeeze(fake_colored_pts)
-        test_fake_color256 = ((fake_colored_pts + 1) * 127.5).astype(np.int16)  # (batch_size, N, 3)
-        hex_fake_colors = [np_color_to_hex_str(color) for color in test_fake_color256]
-        hex_true_colors = [np_color_to_hex_str(color) for color in batch_test_color]
+
+    fake_colored_pts = sess.run(fake_pts, feed_dict={input_pt: batch_test_ndata_color,
+                                                     bn_is_train: False,
+                                                     keep_prob:1.0})
+    fake_colored_pts = np.squeeze(fake_colored_pts)
+    test_fake_color256 = ((fake_colored_pts + 1) * 127.5).astype(np.int16)  # (batch_size, N, 3)
+    hex_fake_colors = [np_color_to_hex_str(color) for color in test_fake_color256]
+    hex_true_colors = [np_color_to_hex_str(color) for color in batch_test_color]
         # show_id = 2
-        for j in range(batch_size):
-            fname = os.path.join(test_dir, "epoch{0}_id{1}_dp{2:.1f}.png".format(model_id,j, i/10.0))
-            display_point(batch_test_data[j], hex_true_colors[j], hex_fake_colors[j], fname)
+    for j in range(batch_size):
+        fname = os.path.join(test_dir, "epoch{0}_id{1}_dp{2:.1f}.png".format(model_id,j, i/10.0))
+        display_point(batch_test_data[j], hex_true_colors[j], hex_fake_colors[j], fname)
 #        all_ex.append(test_fake_color256[show_id])
 #    for i in all_ex:
 #        i -= all_ex[0]

@@ -8,6 +8,7 @@ import os
 from mpl_toolkits.mplot3d import Axes3D
 from pyntcloud import PyntCloud
 import pandas as pd
+from PIL import Image, ImageChops
 
 def show_all_variables():
     model_vars = tf.trainable_variables()
@@ -40,7 +41,7 @@ def hausdorff_distance(ptsA, ptsB):
     return max([directed_hausdorff_distance(ptsA, ptsB), directed_hausdorff_distance(ptsB, ptsA)])
 
 
-def display_point(pts, color1, color2=None, fname=None):
+def display_point(pts, color1, color2=None, fname=None, title=None):
     """
 
     :param pts:
@@ -77,6 +78,7 @@ def display_point(pts, color1, color2=None, fname=None):
         ax.set_xlim(mid_x - max_range, mid_x + max_range)
         ax.set_ylim(mid_y - max_range, mid_y + max_range)
         ax.set_zlim(mid_z - max_range, mid_z + max_range)
+        ax.title.set_text(title)
         ax.set_aspect("equal")
         ax.grid("off")
         plt.axis('off')
@@ -166,6 +168,31 @@ def save_ply(data, color, fname):
     df2 = pd.DataFrame(color, columns=["red","green","blue"])
     pc = PyntCloud(pd.concat([df1, df2], axis=1))
     pc.to_file(fname)
+
+def horizontal_concatnate_pic(fout, *fnames):
+    images = [trim_white_space(Image.open(i).convert('RGB')) for i in fnames]
+    # images = map(Image.open, fnames)
+    widths, heights = zip(*(i.size for i in images))
+
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    new_im = Image.new('RGB', (total_width, max_height))
+
+    x_offset = 0
+    for im in images:
+        new_im.paste(im, (x_offset, 0))
+        x_offset += im.size[0]
+
+    new_im.save(fout)
+
+def trim_white_space(im):
+    bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -5)
+    bbox = diff.getbbox()
+    if bbox:
+        return im.crop(bbox)
 
 if __name__ == "__main__":
     pass
