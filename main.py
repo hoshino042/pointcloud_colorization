@@ -12,9 +12,9 @@ config.read("base_config.ini")
 
 NUM_PTS = config["hyperparameters"].getint("num_pts")
 CAT_DIR = "./Data/category_h5py"
-train_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
+#train_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
 # train_dir = "./train_results/2018_07_10_16_27"
-train_dir = os.path.join("./train_results", train_time)
+train_dir = os.path.join("./train_results", "2018_10_13_15_40")
 if not os.path.exists(train_dir):
     os.mkdir(train_dir)
 
@@ -38,7 +38,7 @@ def main():
         print(np.amin(ndata))
         ## add noise to ndata and color
         # display_point(data[0], color[0])
-        use_samples = 320
+        use_samples = 640
         data, ndata, color = data[:use_samples], ndata[:use_samples], color[:use_samples]
         if test_ndata.shape[0]  > 8:
             BATCH_SIZE = 8

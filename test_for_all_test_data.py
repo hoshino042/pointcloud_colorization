@@ -70,7 +70,7 @@ for cat in cat_list:
             fake_colored_pts = sess.run(fake_pts, feed_dict={input_pt: batch_test_ndata_color,
                                                          bn_is_train: False})
             fake_colored_pts = np.squeeze(fake_colored_pts)
-            test_fake_color256 = ((fake_colored_pts + 1) * 127.5).astype(np.int16)  # (batch_size, N, 3)
+            test_fake_color256 = ((fake_colored_pts + 127.5) * 127.5).astype(np.int16)  # (batch_size, N, 3)
             # show_id = 2
             for j in range(batch_size):
                 fname_GT = os.path.join(cat_dir, "test_chair_GT_{}.png".format(i * batch_size + j))

@@ -236,7 +236,7 @@ class point2color():
                 hex_true_colors = [np_color_to_hex_str(color) for color in batch_test_color]
                 for idx, data in enumerate(batch_test_data):
                     fname_ply = os.path.join(test_sum_dir, "epoch{0}_{1}.ply".format(epoch, idx))
-                    save_ply(data, test_fake_color256[idx], fname_ply)
+                    # save_ply(data, test_fake_color256[idx], fname_ply)
                     fname = os.path.join(test_sum_dir, "epoch{0}_{1}.png".format(epoch, idx))
                     display_point(data, hex_true_colors[idx], hex_fake_colors[idx], fname=fname)
                     printout(self.flog, "Saved! {0} and {1}".format(fname, fname_ply))
