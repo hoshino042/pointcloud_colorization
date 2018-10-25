@@ -1,7 +1,11 @@
-/test_results/*
-/train_results/*
-/Data/category_h5py/*
-/Utils/*
+test_results/
+train_results/
+Data/category_h5py/
+Utils/
+.idea/
+trained_cls/
+**/*.h5
+**/*.hdf5
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -45,7 +45,7 @@ def conv2d(input_, output_dim,
 #         return tf.contrib.layers.batch_norm(x, decay=self.momentum, updates_collections=None, epsilon=self.epsilon,
 #                                         scale=True, scope=self.name)
 
-class batch_norm(object):
+class Batch_Norm(object):
     def __init__(self, epsilon=1e-5, momentum = 0.99, name="batch_norm"):
         with tf.variable_scope(name):
             self.epsilon  = epsilon
@@ -86,3 +86,34 @@ def max_pool2d(inputs,
                                  padding=padding,
                                  name=sc.name)
         return outputs
+
+
+def FE_layer(inputs, cout, bn_is_training=True, scope="FE_layer"):
+    """
+
+    :param inputs: a tensor of shape (batch_size, num_pts, cin)
+    :param cout: # out channels
+    :return:  a tensor of shape (batch_size, num_pts, cout)
+    """
+    channel = cout // 2
+    cin = inputs.get_shape().as_list()[-1]
+    with tf.variable_scope(scope) as local_scope:
+        num_pts = inputs.get_shape().as_list()[1]
+        point_wise_feature = tf.layers.dense(inputs, channel,
+                                             kernel_initializer=tf.truncated_normal_initializer(stddev=0.02))
+        batch_norm = Batch_Norm()
+        point_wise_feature = batch_norm(point_wise_feature, phase=bn_is_training)
+        point_wise_feature = tf.nn.relu(point_wise_feature)  # (batch_size, num_pts, cout // 2)
+        aggregated_feature = tf.reduce_max(point_wise_feature, axis=1, keepdims=True)  # batch_size, 1, cout//2
+        repeated = tf.tile(aggregated_feature, [1, num_pts, 1])  # (batch_size, num_pts, cout // 2)
+        point_wise_concatenated_feature = tf.concat(axis=-1, values=[point_wise_feature, repeated])
+        return point_wise_concatenated_feature
+
+
+def dense_bn_relu(inputs, units, bn_is_training=True, activation_fn=tf.nn.relu, scope="dense"):
+    with tf.variable_scope(scope) as local_scope:
+        out = tf.layers.dense(inputs, units, kernel_initializer=tf.truncated_normal_initializer(stddev=0.02))
+        batch_norm = Batch_Norm()
+        out = batch_norm(out, phase=bn_is_training)
+        out = activation_fn(out)
+        return out

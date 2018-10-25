@@ -8,6 +8,7 @@ import os
 from mpl_toolkits.mplot3d import Axes3D
 from pyntcloud import PyntCloud
 import pandas as pd
+from PIL import Image, ImageChops
 
 def show_all_variables():
     model_vars = tf.trainable_variables()
@@ -40,7 +41,7 @@ def hausdorff_distance(ptsA, ptsB):
     return max([directed_hausdorff_distance(ptsA, ptsB), directed_hausdorff_distance(ptsB, ptsA)])
 
 
-def display_point(pts, color, color_label=None, fname=None):
+def display_point(pts, color1, color2=None, fname=None, title=None):
     """
 
     :param pts:
@@ -49,10 +50,14 @@ def display_point(pts, color, color_label=None, fname=None):
     :param fname: save path and filename of the figue
     :return:
     """
+    if isinstance(color1, np.ndarray):
+        color1 = np_color_to_hex_str(color1)
+    if isinstance(color2, np.ndarray):
+        color2 = np_color_to_hex_str(color2)
     DPI =300
     PIX_h = 1000
     MARKER_SIZE = 5
-    if color_label is None:
+    if color2 is None:
         PIX_w = PIX_h
     else:
         PIX_w = PIX_h * 2
@@ -67,12 +72,13 @@ def display_point(pts, color, color_label=None, fname=None):
     fig.set_size_inches(PIX_w/DPI, PIX_h/DPI)
     plt.subplots_adjust(top=1.2, bottom=-0.2, right=1.5, left=-0.5, hspace=0, wspace=-0.7)
     plt.margins(0, 0)
-    if color_label is None:
+    if color2 is None:
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(X, Y, Z, c=color, edgecolors="none", s=MARKER_SIZE, depthshade=True)
+        ax.scatter(X, Y, Z, c=color1, edgecolors="none", s=MARKER_SIZE, depthshade=True)
         ax.set_xlim(mid_x - max_range, mid_x + max_range)
         ax.set_ylim(mid_y - max_range, mid_y + max_range)
         ax.set_zlim(mid_z - max_range, mid_z + max_range)
+        ax.title.set_text(title)
         ax.set_aspect("equal")
         ax.grid("off")
         plt.axis('off')
@@ -84,8 +90,8 @@ def display_point(pts, color, color_label=None, fname=None):
     else:
         ax = fig.add_subplot(121, projection='3d')
         bx = fig.add_subplot(122, projection='3d')
-        ax.scatter(X, Y, Z, c=color, edgecolors="none", s=MARKER_SIZE, depthshade=True)
-        bx.scatter(X, Y, Z, c=color_label, edgecolors="none", s=MARKER_SIZE, depthshade=True)
+        ax.scatter(X, Y, Z, c=color1, edgecolors="none", s=MARKER_SIZE, depthshade=True)
+        bx.scatter(X, Y, Z, c=color2, edgecolors="none", s=MARKER_SIZE, depthshade=True)
         ax.set_xlim(mid_x - max_range, mid_x + max_range)
         ax.set_ylim(mid_y - max_range, mid_y + max_range)
         ax.set_zlim(mid_z - max_range, mid_z + max_range)
@@ -149,7 +155,7 @@ def load_h5(path, *kwd):
     return list_
 
 def load_single_cat_h5(cat,num_pts,type, *kwd):
-    fpath = os.path.join("./Data/category_h5py", cat, "PTS_{}".format(num_pts), "ply_data_{}.h5".format(type))
+    fpath = os.path.join("./data/category_h5py", cat, "PTS_{}".format(num_pts), "ply_data_{}.h5".format(type))
     return load_h5(fpath, *kwd)
 
 def printout(flog, data): # follow up
@@ -162,6 +168,31 @@ def save_ply(data, color, fname):
     df2 = pd.DataFrame(color, columns=["red","green","blue"])
     pc = PyntCloud(pd.concat([df1, df2], axis=1))
     pc.to_file(fname)
+
+def horizontal_concatnate_pic(fout, *fnames):
+    images = [trim_white_space(Image.open(i).convert('RGB')) for i in fnames]
+    # images = map(Image.open, fnames)
+    widths, heights = zip(*(i.size for i in images))
+
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    new_im = Image.new('RGB', (total_width, max_height))
+
+    x_offset = 0
+    for im in images:
+        new_im.paste(im, (x_offset, 0))
+        x_offset += im.size[0]
+
+    new_im.save(fout)
+
+def trim_white_space(im):
+    bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -5)
+    bbox = diff.getbbox()
+    if bbox:
+        return im.crop(bbox)
 
 if __name__ == "__main__":
     pass
