@@ -155,7 +155,7 @@ def load_h5(path, *kwd):
     return list_
 
 def load_single_cat_h5(cat,num_pts,type, *kwd):
-    fpath = os.path.join("./Data/category_h5py", cat, "PTS_{}".format(num_pts), "ply_data_{}.h5".format(type))
+    fpath = os.path.join("./data/category_h5py", cat, "PTS_{}".format(num_pts), "ply_data_{}.h5".format(type))
     return load_h5(fpath, *kwd)
 
 def printout(flog, data): # follow up

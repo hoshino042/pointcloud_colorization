@@ -5,7 +5,7 @@ from utils import *
 import numpy as np
 
 
-cat_list = [i for i in os.listdir("./Data/category_h5py") if os.path.isdir(os.path.join("./Data/category_h5py", i))]
+cat_list = [i for i in os.listdir("./data/category_h5py") if os.path.isdir(os.path.join("./data/category_h5py", i))]
 NUM_PTS = 4096
 test_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
 test_dir = os.path.join("./test_results", test_time)
@@ -33,26 +33,11 @@ for cat in cat_list:
     log_string(graph_file)
 
     with tf.Session() as sess:
-        # real_pts_color_ph = tf.placeholder(dtype=tf.float32, shape=(batch_size, NUM_PTS, 6),
-        #                                         name="real_pts_color_ph")
-        # bn_is_train = tf.placeholder(dtype=tf.bool, shape=(), name="bn_is_train")
-        # keep_prob_1 = tf.placeholder(dtype=tf.float32, shape=(), name="keep_prob")
-        # try:
         try:
             saver = tf.train.import_meta_graph(graph_file)
             saver.restore(sess, variable_file)
         except:
             continue
-        # except:
-        #     continue
-        # for op in tf.get_default_graph().get_operations():
-        #     if "tanh" in str(op.name).lower():
-        #         print(str(op.name))
-        # all_values = [op.values for op in sess.graph.get_operations()]
-        # # all_ops = [n.name for n in tf.get_default_graph().as_graph_def().node if "generator" in n.name]
-        # import pprint
-        # pprint.pprint(all_values)
-        # show_all_variables()
         fake_pts = tf.get_default_graph().get_tensor_by_name("generator/Tanh:0")
         input_pt = tf.get_default_graph().get_tensor_by_name("real_pts_color_ph:0")
         batch_size = int(input_pt.get_shape()[0])
@@ -88,9 +73,6 @@ for cat in cat_list:
                 os.remove(fname_gen)
                 os.remove(fname_input)
             LOG_FOUT.close()
-#        all_ex.append(test_fake_color256[show_id])
-#    for i in all_ex:
-#        i -= all_ex[0]
-#        print(np.sum(i ** 2))
+
 
 

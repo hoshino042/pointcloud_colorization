@@ -1,29 +1,20 @@
-from sklearn.manifold import TSNE
-import os
-import h5py
-import numpy as np
-from math import ceil, floor
+from math import  floor
 from trained_cls.voxelNet import *
 import configparser
-import time
-import shutil
-import matplotlib.pyplot as plt
 from metrics import *
 from collections import namedtuple
-import matplotlib as mpl
-import tensorflow as tf
 from utils import *
-
 plt.style.use("seaborn")
 np.random.seed(42)
 category_name = []
-# num_pts = 4096
+
 
 NUM_PTS = 4096
+
 # load generator and generate the colorized point cloud
 genrated_point_cloud = []
 generation_label = []
-cat_list = [i for i in os.listdir("./Data/category_h5py") if os.path.isdir(os.path.join("./Data/category_h5py", i))]
+cat_list = [i for i in os.listdir("./data/category_h5py") if os.path.isdir(os.path.join("./data/category_h5py", i))]
 for cat in cat_list:
     tf.reset_default_graph()
     cat_name = cat.split("_")[-1].split(",")[0]
@@ -70,7 +61,7 @@ for cat in cat_list:
 genrated_point_cloud = np.concatenate(genrated_point_cloud, 0)
 generation_label = np.concatenate(generation_label, 0)
 print(genrated_point_cloud.shape)
-f = h5py.File("./Data/generation_L1_model_{}.hdf5".format(model_id), "w")
+f = h5py.File("./data/generation_L1_model_{}.hdf5".format(model_id), "w")
 
 f.create_dataset(data=genrated_point_cloud, name="ndata_ncolor")
 tf.reset_default_graph()
@@ -126,7 +117,7 @@ out_dense3 = tf.get_default_graph().get_tensor_by_name("cls/dense3/dense/BiasAdd
 out_dense4 = tf.get_default_graph().get_tensor_by_name("cls/dense4/dense/BiasAdd:0") # batch_size, 1024
 
 saver = tf.train.Saver()
-test_data = h5py.File(os.path.join("./Data/test_data", "test_epoch_0.hdf5"), "r") #
+test_data = h5py.File(os.path.join("./ddata/test_data", "test_epoch_0.hdf5"), "r") #
 test_ndata = test_data["ndata"][:]
 test_color = test_data["color"][:]
 test_label = test_data["cid"][:]
