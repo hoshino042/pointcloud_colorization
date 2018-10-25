@@ -13,15 +13,15 @@ class point2color():
         self.sess = sess
         self.flog = flog
         # batch_norm for generator
-        self.g_bn_1 = batch_norm(name="g_bn_1")
-        self.g_bn_2 = batch_norm(name="g_bn_2")
-        self.g_bn_3 = batch_norm(name="g_bn_3")
-        self.g_bn_4 = batch_norm(name="g_bn_4")
-        self.g_bn_5 = batch_norm(name="g_bn_5")
+        self.g_bn_1 = Batch_Norm(name="g_bn_1")
+        self.g_bn_2 = Batch_Norm(name="g_bn_2")
+        self.g_bn_3 = Batch_Norm(name="g_bn_3")
+        self.g_bn_4 = Batch_Norm(name="g_bn_4")
+        self.g_bn_5 = Batch_Norm(name="g_bn_5")
 
-        self.g_bn_seg_1 = batch_norm(name="g_bn_seg_1")
-        self.g_bn_seg_2 = batch_norm(name="g_bn_seg_2")
-        self.g_bn_seg_3 = batch_norm(name="g_bn_seg_3")
+        self.g_bn_seg_1 = Batch_Norm(name="g_bn_seg_1")
+        self.g_bn_seg_2 = Batch_Norm(name="g_bn_seg_2")
+        self.g_bn_seg_3 = Batch_Norm(name="g_bn_seg_3")
 
         self.lr_g = lr_g
 

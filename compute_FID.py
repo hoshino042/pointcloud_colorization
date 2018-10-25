@@ -30,7 +30,7 @@ for cat in cat_list:
     # load test data
     test_data, test_ndata, test_color, test_cid = load_single_cat_h5(cat, NUM_PTS,"test","data", "ndata", "color", "cid")
     nb_samples = test_data.shape[0]
-    modelPath = "./train_results/2018_10_13_15_40/{}/model/".format(cat)
+    modelPath = "./train_results/2018_10_13_15_40_L1_loss_only/{}/model/".format(cat)
     model_id = 180
     graph_file = os.path.join(modelPath, "model-" + str(model_id) + ".meta")
     variable_file = os.path.join(modelPath, "model-" + str(model_id))
