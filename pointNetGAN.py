@@ -234,9 +234,9 @@ class point2color():
         """
         
         :param train_dir: 
-        :param data: a numpy array of shape (N, num_pts, 3)
-        :param ndata: a numpy array of shape (N, num_pts, 3)
-        :param color: a numpy array of shape (N, num_pts, 3)
+        :param data: unnormalized xyz coordinates of shape (N, num_pts, 3)
+        :param ndata: normalized xyz coordinates of shape (N, num_pts, 3)
+        :param color: unnormalized rgb values of shape (N, num_pts, 3)
         :return: 
         """
         ncolor = (color - 127.5) / 127.5
