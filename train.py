@@ -1,42 +1,27 @@
-# from pointNetGAN import point2color as GAN
-from model import point2color as GAN
+from pointNetGAN import point2color as GAN
 from utils import *
 import time, os
 import numpy as np
 import configparser
 import shutil
-import socket
-
-# download training data modified from shapenet
-HOSTNAME = socket.gethostname()
-DATA_DIR = "./data"
-if not os.path.exists(DATA_DIR):
-    os.mkdir(DATA_DIR)
-if not os.path.exists(os.path.join(DATA_DIR, 'category_h5py')):
-    www = 'https://drive.google.com/open?id=1hNBo71t_0jryztKalcn-e30EPeSNWj4i'
-    zipfile = os.path.basename(www)
-    os.system('wget %s; unzip %s' % (www, zipfile))
-    os.system('mv %s %s' % (zipfile[:-4], DATA_DIR))
-    os.system('rm %s' % (zipfile))
-
-
 
 config = configparser.ConfigParser()
 config.read("base_config.ini")
 NUM_PTS = config["hyperparameters"].getint("num_pts")
 EPOCH = config["hyperparameters"].getint("epoch")
-LR = config["hyperparameters"].getint("epoch")
+LR_D = config["hyperparameters"].getfloat("lr_d")
+LR_G = config["hyperparameters"].getfloat("lr_g")
 CAT_DIR = "./data/category_h5py"
 
 train_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
-train_dir = "./train_results/2018_07_10_16_27"
+train_dir = os.path.join("train_results", train_time)
 if not os.path.exists(train_dir):
     os.mkdir(train_dir)
-
 shutil.copyfile("base_config.ini", os.path.join(train_dir, "config.ini"))
 
 
 def main():
+    # train one model for every category
     for cat in os.listdir(CAT_DIR):
         if cat in os.listdir(train_dir):
             continue
@@ -51,7 +36,6 @@ def main():
         # load test data from hdf5
         test_data, test_ndata, test_color = load_single_cat_h5(cat, NUM_PTS,"test","data", "ndata", "color")
         printout(flog, "Loading test data! {}".format(cat))
-        print(np.amin(ndata))
 
         use_samples = 640
         data, ndata, color = data[:use_samples], ndata[:use_samples], color[:use_samples]
@@ -62,10 +46,12 @@ def main():
         else:
             BATCH_SIZE = 2
         with tf.Session() as sess:
-            ptGAN = GAN(sess, flog, num_pts=NUM_PTS,
+            ptGAN = GAN(sess, flog,
+                        num_pts=NUM_PTS,
                         batch_size=BATCH_SIZE,
                         epoch=EPOCH,
-                        lr_g=LR)
+                        lr_g=LR_G,
+                        lr_d=LR_D)
             ptGAN.train(train_cat_dir, data, ndata, color, test_data, test_ndata, test_color)
         tf.reset_default_graph()
 

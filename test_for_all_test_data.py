@@ -42,7 +42,6 @@ for cat in cat_list:
         input_pt = tf.get_default_graph().get_tensor_by_name("real_pts_color_ph:0")
         batch_size = int(input_pt.get_shape()[0])
         bn_is_train = tf.get_default_graph().get_tensor_by_name("bn_is_train:0")
-        # keep_prob = tf.get_default_graph().get_tensor_by_name("keep_prob:0")
 
         total_batch = test_data.shape[0] // batch_size
         for i in range(total_batch):

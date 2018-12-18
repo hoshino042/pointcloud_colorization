@@ -15,7 +15,6 @@ def dense(input_, output_size, scope=None, stddev=0.02, bias_start=0.0, with_w=F
 
 def conv2d(input_, output_dim,
            k_h=1, k_w=1, d_h=1, d_w=1, stddev=0.02,
-           activation_fn = tf.nn.relu, bn = True,
            scope="conv2d"):
     with tf.variable_scope(scope):
         w = tf.get_variable('w', [k_h, k_w, input_.get_shape()[-1], output_dim],
@@ -24,26 +23,7 @@ def conv2d(input_, output_dim,
 
         biases = tf.get_variable('biases', [output_dim], initializer=tf.constant_initializer(0.0))
         conv = tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape())
-    #     if bn:
-    #         batch_norm = batch_norm()
-    #         outputs = batch_norm(conv, train = bn_is_train)
-    #
-    # if activation_fn is not None:
-    #     outputs = activation_fn(outputs)
-
     return conv
-
-# class batch_norm(object):
-# # h1 = lrelu(tf.contrib.layers.batch_norm(conv2d(h0, self.df_dim*2, name='d_h1_conv'),decay=0.9,updates_collections=None,epsilon=0.00001,scale=True,scope="d_h1_conv"))
-#     def __init__(self, epsilon=1e-5, momentum=0.9, name="batch_norm"):
-#         with tf.variable_scope(name):
-#             self.epsilon = epsilon
-#             self.momentum = momentum
-#             self.name = name
-#
-#     def __call__(self, x, train=True):
-#         return tf.contrib.layers.batch_norm(x, decay=self.momentum, updates_collections=None, epsilon=self.epsilon,
-#                                         scale=True, scope=self.name)
 
 class Batch_Norm(object):
     def __init__(self, epsilon=1e-5, momentum = 0.99, name="batch_norm"):
@@ -52,7 +32,7 @@ class Batch_Norm(object):
             self.momentum = momentum
             self.name = name
 
-    def __call__(self, x, phase):#直接调用实例
+    def __call__(self, x, phase):
         return tf.contrib.layers.batch_norm(x,
                       decay=self.momentum,
                       epsilon=self.epsilon,
@@ -88,26 +68,6 @@ def max_pool2d(inputs,
         return outputs
 
 
-def FE_layer(inputs, cout, bn_is_training=True, scope="FE_layer"):
-    """
-
-    :param inputs: a tensor of shape (batch_size, num_pts, cin)
-    :param cout: # out channels
-    :return:  a tensor of shape (batch_size, num_pts, cout)
-    """
-    channel = cout // 2
-    cin = inputs.get_shape().as_list()[-1]
-    with tf.variable_scope(scope) as local_scope:
-        num_pts = inputs.get_shape().as_list()[1]
-        point_wise_feature = tf.layers.dense(inputs, channel,
-                                             kernel_initializer=tf.truncated_normal_initializer(stddev=0.02))
-        batch_norm = Batch_Norm()
-        point_wise_feature = batch_norm(point_wise_feature, phase=bn_is_training)
-        point_wise_feature = tf.nn.relu(point_wise_feature)  # (batch_size, num_pts, cout // 2)
-        aggregated_feature = tf.reduce_max(point_wise_feature, axis=1, keepdims=True)  # batch_size, 1, cout//2
-        repeated = tf.tile(aggregated_feature, [1, num_pts, 1])  # (batch_size, num_pts, cout // 2)
-        point_wise_concatenated_feature = tf.concat(axis=-1, values=[point_wise_feature, repeated])
-        return point_wise_concatenated_feature
 
 
 def dense_bn_relu(inputs, units, bn_is_training=True, activation_fn=tf.nn.relu, scope="dense"):

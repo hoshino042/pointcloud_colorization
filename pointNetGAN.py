@@ -8,7 +8,13 @@ from utils import *
 import time
 from ops import *
 class point2color():
-    def __init__(self,sess, flog, batch_size = 32, num_pts = 2048, L1_lambda = 20, epoch =100, lr_d=0.001, lr_g=0.0001):
+    def __init__(self,sess, flog,
+                 batch_size = 32,
+                 num_pts = 2048,
+                 L1_lambda = 20,
+                 epoch =100,
+                 lr_d=0.001,
+                 lr_g=0.0001):
         self.isSingleClass = True
         self.batch_size = batch_size
         self.num_pts = num_pts
@@ -17,33 +23,31 @@ class point2color():
         self.sess = sess
         self.flog = flog
         # batch_norm for generator
-        self.g_bn_1 = batch_norm(name="g_bn_1")
-        self.g_bn_2 = batch_norm(name="g_bn_2")
-        self.g_bn_3 = batch_norm(name="g_bn_3")
-        self.g_bn_4 = batch_norm(name="g_bn_4")
-        self.g_bn_5 = batch_norm(name="g_bn_5")
+        self.g_bn_1 = Batch_Norm(name="g_bn_1")
+        self.g_bn_2 = Batch_Norm(name="g_bn_2")
+        self.g_bn_3 = Batch_Norm(name="g_bn_3")
+        self.g_bn_4 = Batch_Norm(name="g_bn_4")
+        self.g_bn_5 = Batch_Norm(name="g_bn_5")
 
-        self.g_bn_seg_1 = batch_norm(name="g_bn_seg_1")
-        self.g_bn_seg_2 = batch_norm(name="g_bn_seg_2")
-        self.g_bn_seg_3 = batch_norm(name="g_bn_seg_3")
+        self.g_bn_seg_1 = Batch_Norm(name="g_bn_seg_1")
+        self.g_bn_seg_2 = Batch_Norm(name="g_bn_seg_2")
+        self.g_bn_seg_3 = Batch_Norm(name="g_bn_seg_3")
 
         # batch_norm for discriminator
-        self.d_bn_1 = batch_norm(name="d_bn_1")
-        self.d_bn_2 = batch_norm(name="d_bn_2")
-        self.d_bn_3 = batch_norm(name="d_bn_3")
-        self.d_bn_4 = batch_norm(name="d_bn_4")
-        self.d_bn_5 = batch_norm(name="d_bn_5")
+        self.d_bn_1 = Batch_Norm(name="d_bn_1")
+        self.d_bn_2 = Batch_Norm(name="d_bn_2")
+        self.d_bn_3 = Batch_Norm(name="d_bn_3")
+        self.d_bn_4 = Batch_Norm(name="d_bn_4")
+        self.d_bn_5 = Batch_Norm(name="d_bn_5")
 
-        self.d_bn_cls_1 = batch_norm(name = "d_bn_cls_1")
-        self.d_bn_cls_2 = batch_norm(name = "d_bn_cls_2")
+        self.d_bn_cls_1 = Batch_Norm(name = "d_bn_cls_1")
+        self.d_bn_cls_2 = Batch_Norm(name = "d_bn_cls_2")
         self.lr_d = lr_d
         self.lr_g = lr_g
 
         self.build_model()
-        pass
 
     def generator(self, point_cloud, bn_is_train, keep_prob):
-        pass
         """
         
         :param point_cloud: input raw point cloud , should be of shape (batch_size, num_pts, 3)
@@ -66,7 +70,6 @@ class point2color():
             out3 = tf.nn.relu(self.g_bn_3(out3, phase=bn_is_train))
             self.deadReLU_out3 = tf.summary.histogram("g_out3", out3)
 
-
             out4 = conv2d(input_=out3, output_dim=512, scope='g_conv4')  # (32, N, 1 , 512)
             out4 = tf.nn.relu(self.g_bn_4(out4, phase=bn_is_train))
             self.deadReLU_out4 = tf.summary.histogram("g_out4", out4)
@@ -75,30 +78,11 @@ class point2color():
             out5 = tf.nn.relu(self.g_bn_5(out5, phase=bn_is_train))
             self.deadReLU_out5 = tf.summary.histogram("g_out5", out5)
 
-            # out1 = tf_util.conv2d(input_image, 64, [1, 3], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='g_conv1',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 64
-            # out2 = tf_util.conv2d(out1, 128, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='g_conv2',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 128
-            # out3 = tf_util.conv2d(out2, 128, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='g_conv3',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 128
-            #
-            # out4 = tf_util.conv2d(out3, 512, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='g_conv4',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 512
-            # out5 = tf_util.conv2d(out4, 2048, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='g_conv5',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 2048
             out_max = tf.nn.max_pool(out5,
                            ksize=[1, self.num_pts, 1, 1],
                            strides=[1, 2, 2, 1],
                            padding="VALID",
                            name="g_maxpool")
-            # out_max = max_pool2d(out5, kernel_size=[self.num_pts, 1],
-            #                              scope='')  # batch_size x 1 x 1 x 1024 represent global information
-
             # segmentation network
             expand = tf.tile(out_max, [1, self.num_pts, 1, 1])  # batch_size x N x 1 x 1024
             concat = tf.concat(axis=3, values=[expand, out1, out2, out3, out4, out5])  # batch_size x N x 1 x (2048 + 256 + 512 + 64)
@@ -119,22 +103,10 @@ class point2color():
             net2 = conv2d(input_=net2, output_dim=3, scope='seg/g_conv4')  # batch_size x N x 1 x 3
             net2 = tf.nn.tanh(net2)
             color = tf.reshape(net2, [self.batch_size, self.num_pts, 3])
-            # net2 = tf_util.conv2d(concat, 256, [1, 1], padding='VALID', stride=[1, 1], bn_decay=bn_decay,
-            #                       bn=True, is_training=is_training, scope='seg/g_conv1',
-            #                      weight_decay=weight_decay)  # batch_size x N x 1 x 256
-            #net2 = tf_util.dropout(net2, keep_prob=0.8, is_training=is_training, scope='seg/g_dp1')
-            # net2 = tf_util.conv2d(net2, 256, [1, 1], padding='VALID', stride=[1, 1], bn_decay=bn_decay,
-            #                       bn=True, is_training=is_training, scope='seg/g_conv2', weight_decay=weight_decay)
-            #net2 = tf_util.dropout(net2, keep_prob=0.8, is_training=is_training, scope='seg/g_dp2')
-            # net2 = tf_util.conv2d(net2, 128, [1, 1], padding='VALID', stride=[1, 1], bn_decay=bn_decay,
-            #                       bn=True, is_training=is_training, scope='seg/g_conv3',
-            #                       weight_decay=weight_decay)  # batch_size x N x 1 x 128
-            # net2 = tf_util.conv2d(net2, 3, [1, 1], padding='VALID', stride=[1, 1], activation_fn=tf.tanh ,
-            #                        bn=False, scope='seg/g_conv4', weight_decay=weight_decay)  # batch_size x N x 1 x 3
+
             return color  # (batch_size, N, 3)
 
     def discriminator(self, point_cloud_color, reuse, bn_is_train):
-        pass
         """ ConvNet baseline, input is BxNx6 point cloud """
         with tf.variable_scope("discriminator") as scope:
             if reuse:
@@ -157,28 +129,12 @@ class point2color():
             net = conv2d(input_=net, output_dim=2048, scope='d_conv5')
             net = tf.nn.relu(self.d_bn_5(net, phase=bn_is_train))
 
-            # out1 = tf_util.conv2d(input_image, 64, [1, 6], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='d_conv1',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 64
-            # out2 = tf_util.conv2d(out1, 128, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='d_conv2',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 128
-            # out3 = tf_util.conv2d(out2, 128, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='d_conv3',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 128
-            # out4 = tf_util.conv2d(out3, 512, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='d_conv4',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 512
-            # out5 = tf_util.conv2d(out4, 2048, [1, 1], padding='VALID', stride=[1, 1],
-            #                       bn=True, is_training=is_training, scope='d_conv5',
-            #                       bn_decay=bn_decay)  # batch_size x N x 1 x 2048
             out_max = tf.nn.max_pool(net,
                                      ksize=[1, self.num_pts, 1, 1],
                                      strides=[1, 2, 2, 1],
                                      padding="VALID",
                                      name="d_maxpool")
-            # out_max = max_pool2d(net, [self.num_pts, 1], padding='VALID',
-            #                              scope='d_maxpool')  # batch_size x 1 x 1 x 2048 represent global information
+
             # classification network
             with tf.variable_scope("cls") as scope_cls:
                 net = tf.reshape(out_max, [self.batch_size, -1])
@@ -189,15 +145,9 @@ class point2color():
                 net = dense(net, 256, scope = "d_fc2")
                 net = tf.nn.relu(self.d_bn_cls_2(net, phase = bn_is_train))
 
-                # net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training, scope='cla/d_fc1',
-                #                               bn_decay=bn_decay)
-                # net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training, scope='cla/d_fc2',
-                #                               bn_decay=bn_decay)  # batch_size x 256
                 net = tf.nn.dropout(net, keep_prob=0.7, name="d_dp1")
-                # net = tf_util.dropout(net, keep_prob=0.7, is_training=bn_is_train, scope='cls/d_dp1')
                 net_logit = dense(net, 1, scope = "cls/d_fc3")
 
-                # net_logit = tf_util.fully_connected(net, 1, activation_fn=None, scope='cla/d_fc3')  # batch_size x 1
                 net = tf.nn.sigmoid(net_logit)
                 return net_logit, net
 
@@ -227,7 +177,7 @@ class point2color():
         self.d_real = tf.reduce_mean(self.D_real)
         self.d_fake = tf.reduce_mean(self.D_fake)
 
-        # define d loss and g loss NS-GAN loss
+        # define d loss and g loss, NS-GAN loss
         self.d_loss_real = tf.reduce_mean(
             tf.nn.sigmoid_cross_entropy_with_logits(logits=self.D_real_logit, labels=tf.ones_like(self.D_real_logit)))
         self.d_loss_fake = tf.reduce_mean(
@@ -270,17 +220,15 @@ class point2color():
         self.d_vars = [var for var in t_vars if 'd_' in var.name]
         self.g_vars = [var for var in t_vars if 'g_' in var.name]
 
-        # for item in tf.GraphKeys.UPDATE_OPS:
-        #     print(item)
-        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
-            self.d_optim = tf.train.AdamOptimizer(learning_rate=self.lr_d, name="d_optim").minimize(self.d_loss, var_list=self.d_vars)
-            self.g_optim = tf.train.AdamOptimizer(learning_rate=self.lr_g, name="g_optim").minimize(self.g_loss, var_list=self.g_vars)
-
         # for item in self.d_vars:
         #     print(item)
         #
         # for item in self.g_vars:
         #     print(item)
+
+        with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
+            self.d_optim = tf.train.AdamOptimizer(learning_rate=self.lr_d, name="d_optim").minimize(self.d_loss, var_list=self.d_vars)
+            self.g_optim = tf.train.AdamOptimizer(learning_rate=self.lr_g, name="g_optim").minimize(self.g_loss, var_list=self.g_vars)
 
     def train(self, train_dir, data, ndata, color, test_data, test_ndata, test_color):
         """
@@ -293,34 +241,31 @@ class point2color():
         """
         ncolor = (color - 127.5) / 127.5
         test_ncolor = (test_color - 127.5) / 127.5
-        print(np.mean(ncolor[0],axis=0))
+
         ndata_ncolor = np.concatenate((ndata, ncolor), axis=-1)
         test_ndata_ncolor = np.concatenate((test_ndata, test_ncolor), axis=-1)
         assert ndata_ncolor.shape == (data.shape[0], data.shape[1], 6)
         show_all_variables()
+
         # define saver and summary writer
         self.saver = tf.train.Saver(max_to_keep=200)
         model_dir = os.path.join(train_dir, "model")
         os.mkdir(os.path.join(train_dir, "logs"))
-        train_sum_dir = os.path.join(train_dir, "logs/train")
-        test_sum_dir = os.path.join(train_dir, "logs/test")
+        train_sum_dir = os.path.join(train_dir, "logs","train")
+        test_sum_dir = os.path.join(train_dir, "logs","test")
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
         if not os.path.exists(train_sum_dir):
             os.mkdir(train_sum_dir)
         if not os.path.exists(test_sum_dir):
             os.mkdir(test_sum_dir)
-        self.train_writer = tf.summary.FileWriter(train_sum_dir, self.sess.graph)  # 模型的图已经保存
-        #self.train_writer.add_graph(self.sess.graph)
-        #self.test_writer = tf.summary.FileWriter(test_sum_dir, self.sess.graph)
+        self.train_writer = tf.summary.FileWriter(train_sum_dir, self.sess.graph)
 
         # initilize variables
         tf.global_variables_initializer().run()
-        # loop for epoch
-        #self.saver.save(self.sess, model_dir, global_step=0)
         self.num_batches = ndata.shape[0] // self.batch_size
-        start_time = time.time()
 
+        # for visualization during training
         test_masks = np.random.choice(test_data.shape[0], self.batch_size, replace=False)
         batch_test_ndata = test_ndata_ncolor[test_masks]
         batch_test_color = test_color[test_masks]
@@ -330,6 +275,8 @@ class point2color():
         batch_train_ndata_ncolor = ndata_ncolor[train_masks]
         batch_train_data = data[train_masks] # no normalized data
         batch_train_color = color[train_masks] # true color
+
+        start_time = time.time()
         for epoch in range(self.epoch):
             # get batch data
             for idx in range(self.num_batches):
@@ -363,13 +310,6 @@ class point2color():
                 period = time.time()-start_time
                 printout(self.flog, "Training! epoch %3d/%3d batch%3d/%3d time: %2dh%2dm%2ds  d_loss: %.4f g_loss: %.4f d_real: %.4f d_fake: %.4f" % (
                     epoch+1, self.epoch, idx+1, self.num_batches,period // 3600, period // 60, period % 60 , d_loss_print, g_loss_print, d_real, d_fake))
-                #fake_color = self.sess.run(self.fake_color_ts, feed_dict = {self.real_pts_color_ph: batch_ndata_ncolor,
-                #                                               self.bn_is_train: True})
-                #fake_color256 = ((fake_color + 1) * 128).astype(np.int16) # (batch_size, N, 3)
-                #hex_fake_color = np_color_to_hex_str(fake_color256[0])
-                #hex_true_color = np_color_to_hex_str(batch_color[0])
-                #display_point(batch_data[0], hex_true_color, hex_fake_color)
-            # save model each 10 epoch
             train_fake_color = self.sess.run(self.fake_color_ts, feed_dict={self.real_pts_color_ph: batch_train_ndata_ncolor,
                                                                self.bn_is_train: False, self.keep_prob: 0.8})
             train_fake_color256 = ((train_fake_color + 1) * 127.5).astype(np.int16)
@@ -380,7 +320,8 @@ class point2color():
                 display_point(data, hex_train_true_colors[idx], hex_train_fake_colors[idx], fname=fname)
                 printout(self.flog, "Saved! {}".format(fname))
 
-            if epoch % 1 == 0:
+            # save model and visualize colorization results on test data
+            if epoch % 3 == 0:
                 self.saver.save(self.sess, model_dir + "/model", epoch)
                 test_fake_color = self.sess.run(self.fake_color_ts, feed_dict={self.real_pts_color_ph: batch_test_ndata,
                                                                self.bn_is_train: False, self.keep_prob: 0.8})
@@ -393,16 +334,7 @@ class point2color():
                     # save_ply(data, test_fake_color256[idx], fname_ply)
                     fname = os.path.join(test_sum_dir, "epoch{0}_{1}.png".format(epoch, idx))
                     display_point(data, hex_true_colors[idx], hex_fake_colors[idx], fname=fname)
-                    printout(self.flog, "Saved! {0}".format(fname))
-            # test for each 5 epoch
-
-
-
-
-        pass
-
-    def sampler(self, model_path, data, ndata, color):
-        pass
+                    printout(self.flog, "Saved! {}".format(fname))
 
 
 if __name__ == "__main__":

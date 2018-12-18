@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import h5py
 import os
-from mpl_toolkits.mplot3d import Axes3D
 from pyntcloud import PyntCloud
 import pandas as pd
 from PIL import Image, ImageChops
@@ -29,17 +28,6 @@ def directed_hausdorff_distance(ptsA, ptsB):
     for pts in ptsA:
         list_min.append(np.min(np.sqrt(np.sum((ptsB - pts) ** 2, axis=1))))
     return max(list_min)
-
-
-def hausdorff_distance(ptsA, ptsB):
-    """
-    This function computes  directed hausdorff distance as H(A, B) = max{h(A,B), h(B,A)}
-    :param ptsA:
-    :param ptsB:
-    :return:
-    """
-    return max([directed_hausdorff_distance(ptsA, ptsB), directed_hausdorff_distance(ptsB, ptsA)])
-
 
 def display_point(pts, color1, color2=None, fname=None, title=None):
     """
@@ -158,7 +146,7 @@ def load_single_cat_h5(cat,num_pts,type, *kwd):
     fpath = os.path.join("./data/category_h5py", cat, "PTS_{}".format(num_pts), "ply_data_{}.h5".format(type))
     return load_h5(fpath, *kwd)
 
-def printout(flog, data): # follow up
+def printout(flog, data):
     print(data)
     flog.write(data + '\n')
 
@@ -196,16 +184,4 @@ def trim_white_space(im):
 
 if __name__ == "__main__":
     pass
-    # a = np.array([[1, 2, 3],
-    #               [2, 3, 4]])
-    # b = np.array([[2, 2, 3],
-    #               [3, 4, 5]])
-    # print(directed_hausdorff_distance(a, b))
-    # print(hausdorff_distance(a, b))
-    # pts_path = r"F:\ShapeNetPartC\category_h5py\02691156_airplane,aeroplane,plane\PTS_4096\ply_data_val.h5"
-    # output_dir = r"F:\ShapeNetPartC\category_h5py\02691156_airplane,aeroplane,plane\PTS_4096\g.png"
-    # pts, color, pid = load_h5(pts_path, "data", "color", "pid")
-    # K = 62
-    # hex_color = color[K]
-    # display_point(pts[K], np_color_to_hex_str(hex_color), pid[K], output_dir)
-    #
+
