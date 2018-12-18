@@ -7,8 +7,9 @@ import numpy as np
 
 cat_list = [i for i in os.listdir("./data/category_h5py") if os.path.isdir(os.path.join("./data/category_h5py", i))]
 NUM_PTS = 4096
+
 test_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
-test_dir = os.path.join("./test_results", test_time)
+test_dir = os.path.join("test_results", test_time)
 if not os.path.exists(test_dir):
     os.mkdir(test_dir)
 

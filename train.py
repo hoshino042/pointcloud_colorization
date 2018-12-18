@@ -13,6 +13,8 @@ LR_D = config["hyperparameters"].getfloat("lr_d")
 LR_G = config["hyperparameters"].getfloat("lr_g")
 CAT_DIR = "./data/category_h5py"
 
+if not os.path.exists("train_results"):
+    os.mkdir("train_results")
 train_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
 train_dir = os.path.join("train_results", train_time)
 if not os.path.exists(train_dir):
