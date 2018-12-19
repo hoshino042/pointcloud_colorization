@@ -13,9 +13,10 @@ model_id = 171
 
 graph_file = os.path.join(modelPath, "model-" + str(model_id) + ".meta")
 variable_file = os.path.join(modelPath, "model-" + str(model_id))
-
+if not os.path.exists("test_results"):
+    os.mkdir("test_results")
 test_time = str(time.strftime('%Y_%m_%d_%H_%M', time.localtime(time.time())))
-test_dir = os.path.join("./test_results", test_time)
+test_dir = os.path.join("test_results", test_time)
 if not os.path.exists(test_dir):
     os.mkdir(test_dir)
 
@@ -44,7 +45,7 @@ with tf.Session() as sess:
     hex_fake_colors = [np_color_to_hex_str(color) for color in test_fake_color256]
     hex_true_colors = [np_color_to_hex_str(color) for color in batch_test_color]
     for j in range(batch_size):
-        fname = os.path.join(test_dir, "epoch{0}_id{1}_dp{2:.1f}.png".format(model_id,j, i/10.0))
+        fname = os.path.join(test_dir, "epoch{0}_id{1}.png".format(model_id,j))
         display_point(batch_test_data[j], hex_true_colors[j], hex_fake_colors[j], fname)
 
 
